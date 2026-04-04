@@ -1,0 +1,7 @@
+# compiled output
+engine.exe
+engine
+
+# object files if you add them later
+*.o
+*.obj
