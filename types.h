@@ -1,10 +1,9 @@
 #pragma once
 
 // types.h
-// these enums aren't used yet but we're going to need them everywhere once
-// we switch to bitboards in Phase 3. putting them here now so there's a
-// clear place for shared types — otherwise they end up scattered across files
-// and then nothing includes the right thing and it's a mess
+// Shared enums and move structures.
+
+#include <vector>
 
 enum Color
 {
@@ -20,5 +19,21 @@ enum PieceType
     ROOK,
     QUEEN,
     KING,
-    NONE // empty square
+    NONE
 };
+
+// Basic move (can optimize/pack later if needed).
+struct Move
+{
+    int from_sq;
+    int to_sq;
+
+    // move type flags (0=quiet, others=special).
+    int flags;
+
+    // default = quiet move.
+    Move(int from, int to, int f = 0) : from_sq(from), to_sq(to), flags(f) {}
+};
+
+// list of moves (optimize later if needed).
+using MoveList = std::vector<Move>;
