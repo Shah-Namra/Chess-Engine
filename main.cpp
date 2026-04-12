@@ -8,13 +8,19 @@
 #include "types.h"
 #include "constants.h"
 #include "movegen.h"
-
 int main()
 {
     init_attack_tables();
 
     Board board;
     board.print();
+
+    MoveList moves = generate_moves(board, WHITE);
+    std::cout << "Total white moves from starting position: " << moves.size() << "\n";
+    if (moves.size() == 20)
+        std::cout << "Phase 8 passed.\n";
+    else
+        std::cout << "Phase 8 FAILED — expected 20.\n";
 
     return 0;
 }
