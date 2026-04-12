@@ -5,3 +5,4 @@ engine
 # object files if you add them later
 *.o
 *.obj
+chess-engine.zip
