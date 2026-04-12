@@ -1,5 +1,5 @@
 // bitboard.cpp
-// Helper implementations.
+// Helper implementations
 
 #include "bitboard.h"
 
@@ -9,7 +9,7 @@ Bitboard KING_ATTACKS[64];
 
 int lsb(Bitboard bb)
 {
-    // index of lowest set bit (bb must non-zero).
+    // index of lowest set bit (bb must non-zero)
     return __builtin_ctzll(bb);
 }
 
@@ -22,7 +22,7 @@ int pop_lsb(Bitboard &bb)
 
 int popcount(Bitboard bb)
 {
-    // count bits using builtin.
+    // count bits using builtin function
     return __builtin_popcountll(bb);
 }
 
@@ -52,18 +52,17 @@ void init_attack_tables()
     {
         Bitboard b = (Bitboard)1 << sq;
 
-        // knight moves (masked to avoid wrap).
+        // knight moves 8 possible moves, but some may be off-board
         KNIGHT_ATTACKS[sq] =
-            (b << 17 & NOT_A_FILE) |
-            (b << 15 & NOT_H_FILE) |
-            (b << 10 & NOT_A_FILE) |
-            (b << 6 & NOT_H_FILE) |
-            (b >> 15 & NOT_A_FILE) |
-            (b >> 17 & NOT_H_FILE) |
-            (b >> 6 & NOT_A_FILE) |
-            (b >> 10 & NOT_H_FILE);
-
-        // king moves (adjacent squares).
+            ((b << 17) & NOT_A_FILE) |  // 2N 1E
+            ((b << 15) & NOT_GH_FILE) | // 2N 1W
+            ((b << 10) & NOT_A_FILE) |  // 1N 2E
+            ((b << 6) & NOT_GH_FILE) |  // 1N 2W
+            ((b >> 6) & NOT_AB_FILE) |  // 1S 2E
+            ((b >> 10) & NOT_H_FILE) |  // 1S 2W
+            ((b >> 15) & NOT_AB_FILE) | // 2S 1E
+            ((b >> 17) & NOT_H_FILE);   // 2S 1W
+        // king moves 8 possible moves removed the off board ones
         KING_ATTACKS[sq] =
             shift_north(b) |
             shift_south(b) |
