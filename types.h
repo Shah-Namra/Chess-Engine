@@ -37,3 +37,13 @@ struct Move
 
 // list of moves (optimize later if needed).
 using MoveList = std::vector<Move>;
+
+// move flags
+// it tracks captured peice and sqare where the peice caputred happen
+// todo: castling, en pasasnt, underpromotions, and more
+// todo:
+struct UndoInfo
+{
+    char captured_piece; // "." no peice is captured
+    int captured_sq;     // sqare where peice is captured
+};

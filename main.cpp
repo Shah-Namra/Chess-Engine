@@ -1,6 +1,6 @@
 // main.cpp
-// Entry point. Initialises attack tables, prints the board.
-// Testing code at the bottom (commented out).
+// Phase 9 test: make a move, print board, unmake it, print again.
+// Boards must be identical. Also test a capture — captured piece must return.
 
 #include <iostream>
 #include "board.h"
@@ -8,83 +8,96 @@
 #include "types.h"
 #include "constants.h"
 #include "movegen.h"
+
+static bool boards_equal(const Board &a, const Board &b)
+{
+    for (int r = 0; r < 8; r++)
+        for (int c = 0; c < 8; c++)
+            if (a.get_piece(r, c) != b.get_piece(r, c))
+                return false;
+    return a.side_to_move == b.side_to_move;
+}
+
 int main()
 {
     init_attack_tables();
 
-    Board board;
-    board.print();
+    // --- test 1: quiet move (e2e4) ---
+    {
+        Board before;
+        Board after;
 
-    MoveList moves = generate_moves(board, WHITE);
-    std::cout << "Total white moves from starting position: " << moves.size() << "\n";
-    if (moves.size() == 20)
-        std::cout << "Phase 8 passed.\n";
-    else
-        std::cout << "Phase 8 FAILED — expected 20.\n";
+        // e2 = sq 12, e4 = sq 28
+        Move m(12, 28, FLAG_DOUBLE_PUSH);
+
+        std::cout << "Before e2-e4:\n";
+        before.print();
+
+        UndoInfo undo = after.make_move(m);
+        std::cout << "After e2-e4:\n";
+        after.print();
+
+        after.unmake_move(m, undo);
+        std::cout << "After unmake:\n";
+        after.print();
+
+        if (boards_equal(before, after))
+            std::cout << "Test 1 PASS: quiet move restored correctly.\n\n";
+        else
+            std::cout << "Test 1 FAIL: board differs after unmake.\n\n";
+    }
+
+    // --- test 2: capture (set up white rook takes black pawn) ---
+    {
+        Board b;
+        // clear e2 pawn and put a white rook on e2, black pawn on e7 stays
+        // actually let's do something simpler: put white rook on e4, black pawn on e7
+        // rook on e4 = sq 28, black pawn on e7 = sq 52
+        // clear the board a bit first
+        b.set_piece(4, 4, 'R'); // white rook on e4
+        b.set_piece(6, 4, '.'); // clear white pawn on e2 (row 6 col 4)
+        // black pawn already on e7 (row 1 col 4) — leave it there
+
+        Board before = b;
+
+        std::cout << "Before rook captures pawn (e4xe7... actually let's do e4-e7 capture):\n";
+        // e4 = sq 28, e7 = sq 52
+        Move m(28, 52, FLAG_CAPTURE);
+
+        before.print();
+
+        UndoInfo undo = b.make_move(m);
+        std::cout << "After capture:\n";
+        b.print();
+
+        b.unmake_move(m, undo);
+        std::cout << "After unmake:\n";
+        b.print();
+
+        if (boards_equal(before, b))
+            std::cout << "Test 2 PASS: capture and restore correct.\n\n";
+        else
+            std::cout << "Test 2 FAIL: board differs after unmake.\n\n";
+    }
+
+    // --- test 3: move count still 20 after make/unmake ---
+    {
+        Board board;
+        Move m(12, 28, FLAG_DOUBLE_PUSH); // e2e4
+        UndoInfo undo = board.make_move(m);
+        board.unmake_move(m, undo);
+
+        MoveList moves = generate_moves(board, WHITE);
+        if (moves.size() == 20)
+            std::cout << "Test 3 PASS: move count still 20 after make/unmake.\n";
+        else
+            std::cout << "Test 3 FAIL: expected 20 moves, got " << moves.size() << "\n";
+    }
 
     return 0;
 }
 
 /*
-// ===#6/7 verification tests ====
-
-static std::string sq_to_alg(int sq) {
-    std::string s;
-    s += (char)('a' + (sq % 8));
-    s += (char)('1' + (sq / 8));
-    return s;
-}
-
-static void check(const char* label, int got, int expected) {
-    std::cout << label << ": " << got;
-    if (got == expected) std::cout << " PASS\n";
-    else std::cout << " FAIL (expected " << expected << ")\n";
-}
-
-int main() {
-    init_attack_tables();
-    Board board;
-    board.print();
-
-    // starting position counts
-    MoveList wp, wn, wk, bp, bn, bk;
-    generate_pawn_moves  (board, WHITE, wp);
-    generate_knight_moves(board, WHITE, wn);
-    generate_king_moves  (board, WHITE, wk);
-    generate_pawn_moves  (board, BLACK, bp);
-    generate_knight_moves(board, BLACK, bn);
-    generate_king_moves  (board, BLACK, bk);
-
-    check("White pawns  ", wp.size(), 16);
-    check("White knights", wn.size(),  4);
-    check("White king   ", wk.size(),  0);
-    check("Black pawns  ", bp.size(), 16);
-    check("Black knights", bn.size(),  4);
-    check("Black king   ", bk.size(),  0);
-
-    // knight on A1 — corner, only 2 moves
-    Board edge;
-    for (int col = 0; col < 8; col++) {
-        edge.set_piece(7, col, '.');
-        edge.set_piece(6, col, '.');
-    }
-    edge.set_piece(7, 0, 'N');
-    MoveList edge_moves;
-    generate_knight_moves(edge, WHITE, edge_moves);
-    check("Knight on A1 ", edge_moves.size(), 2);
-    for (const Move& m : edge_moves)
-        std::cout << "  " << sq_to_alg(m.from_sq) << " -> " << sq_to_alg(m.to_sq) << "\n";
-
-    // knight on E4 — open board, 8 moves
-    Board mid;
-    for (int r = 0; r < 8; r++)
-        for (int c = 0; c < 8; c++)
-            mid.set_piece(r, c, '.');
-    mid.set_piece(4, 4, 'N');
-    MoveList mid_moves;
-    generate_knight_moves(mid, WHITE, mid_moves);
-    check("Knight on E4 ", mid_moves.size(), 8);
-
-    return 0;
-}
+// --- Phase 6/7/8 verification (commented out) ---
+// compile with same command and uncomment to re-run earlier tests
 */
