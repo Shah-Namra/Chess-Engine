@@ -8,3 +8,7 @@ engine
 chess-engine.zip
 tests.cpp
 tests.exe
+
+eval.cpp
+eval.exe
+eval.h
