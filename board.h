@@ -1,13 +1,10 @@
 #pragma once
 
 // board.h
-// Board struct (implementation in board.cpp).
-// Uses char grid for now will switch to bitboards later.
-
 #include <iostream>
+#include <cstdint>
 #include "types.h"
 
-// empty square marker.
 const char EMPTY = '.';
 
 struct Board
@@ -16,18 +13,16 @@ struct Board
     char squares[8][8];
     Color side_to_move;
 
+    // zpbrist hash  which updates incrementally with every move
+    uint64_t zobrist_hash;
+
     Board();
 
-    // access helpers (only way to modify board)
     char get_piece(int row, int col) const;
     void set_piece(int row, int col, char piece);
 
     void print() const;
 
-    // make a move ad return udno info for unmake
-    // not complete
-    // ToDo: castling en passant promotion etc
-    // ToDo: not assume that move is legal
-    UndoInfo make_move(const Move &m);
-    void unmake_move(const Move &m, const UndoInfo &undo);
+    UndoInfo make_move(const Move &m);                     // mpve applied and hash updated
+    void unmake_move(const Move &m, const UndoInfo &undo); // move unod and restore hash
 };

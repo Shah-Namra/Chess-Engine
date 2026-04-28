@@ -1,12 +1,21 @@
 // board.cpp
-// Board method implementations.
-// The struct definition lives in board.h — this file just fills in the bodies.
+// Board method implementations
 
 #include "board.h"
 #include "constants.h"
+#include "hash.h"
 
 static inline int sq_to_row(int sq) { return 7 - (sq / 8); }
 static inline int sq_to_col(int sq) { return sq % 8; }
+
+// XOR a piece in or out of the hash at given square.
+// called by make_move and unmake_move... same operation because XOR is its own inverse.
+static inline void hash_piece(uint64_t &h, char p, int sq)
+{
+    int color, type;
+    if (piece_to_index(p, color, type))
+        h ^= ZOBRIST_PIECES[color][type][sq];
+}
 
 Board::Board()
 {
@@ -28,6 +37,7 @@ Board::Board()
             squares[r][f] = start[r][f];
 
     side_to_move = WHITE;
+    zobrist_hash = compute_hash(*this); // calc initial hash from scratch
 }
 
 char Board::get_piece(int row, int col) const
@@ -38,6 +48,9 @@ char Board::get_piece(int row, int col) const
 void Board::set_piece(int row, int col, char piece)
 {
     squares[row][col] = piece;
+    // NOTE: set_piece does NOT update the hash — it's used for board setup only.
+    // During actual play, use make_move/unmake_move which maintain the hash.
+    // TODO: if we ever use set_piece mid-game, we'll need to recompute hash.
 }
 
 void Board::print() const
@@ -54,35 +67,41 @@ void Board::print() const
         }
         std::cout << '\n';
     }
-    // TODO: add a flip option for black's perspective eventually
-    std::cout << "\n   a b c d e f g h\n\n";
+    std::cout << "\n   a b c d e f g h\n";
+    std::cout << "   side: " << (side_to_move == WHITE ? "white" : "black");
+    std::cout << "  hash: " << std::hex << zobrist_hash << std::dec << "\n\n";
 }
+
 UndoInfo Board::make_move(const Move &m)
 {
-    // make_move
     UndoInfo undo;
     undo.captured_sq = m.to_sq;
     undo.captured_piece = squares[sq_to_row(m.to_sq)][sq_to_col(m.to_sq)];
 
     char moving_piece = squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)];
 
-    // clear the source square
-    squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)] = EMPTY;
+    // squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)] = EMPTY;
 
-    // promotion replace pawn with queen
-    // TODO: under promotions
+    hash_piece(zobrist_hash, moving_piece, m.from_sq);
+
+    // remove captured piece from hash
+    if (undo.captured_piece != EMPTY)
+        hash_piece(zobrist_hash, undo.captured_piece, m.to_sq);
+
+    // promotion
     if (m.flags == FLAG_PROMO_QUEEN)
-    {
         moving_piece = (side_to_move == WHITE) ? 'Q' : 'q';
-    }
+    // add piece to destination in hash
+    hash_piece(zobrist_hash, moving_piece, m.to_sq);
 
-    // places the piece on destination and overwrites captured piece if any
+    // switch side in hash
+    zobrist_hash ^= ZOBRIST_SIDE;
+
+    // upadted board
+    squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)] = EMPTY;
     squares[sq_to_row(m.to_sq)][sq_to_col(m.to_sq)] = moving_piece;
 
-    // TODO: en passant ..the captured pawn is one rank behind
-    // when enpassant is set,capture sq will be adjusted and pawn will also be ...
-
-    // TODO: castling
+    // opponent turn
     side_to_move = (side_to_move == WHITE) ? BLACK : WHITE;
 
     return undo;
@@ -90,22 +109,27 @@ UndoInfo Board::make_move(const Move &m)
 
 void Board::unmake_move(const Move &m, const UndoInfo &undo)
 {
-    // unmake_move put the moved piece back, restore captured piece if any.
-    // need to do it perfectly
-
+    // side restored
     side_to_move = (side_to_move == WHITE) ? BLACK : WHITE;
 
     char moving_piece = squares[sq_to_row(m.to_sq)][sq_to_col(m.to_sq)];
-
-    // promotion? need to keep the pawn on from_sq instead of queen or whatever it was promoted to
+    // if promotion revert to pawn
     if (m.flags == FLAG_PROMO_QUEEN)
-    {
         moving_piece = (side_to_move == WHITE) ? 'P' : 'p';
-    }
 
-    // restore from_sq
+    zobrist_hash ^= ZOBRIST_SIDE;
+
+    // remove piece from destination in hash
+    hash_piece(zobrist_hash, squares[sq_to_row(m.to_sq)][sq_to_col(m.to_sq)], m.to_sq);
+
+    // restored capture piece in hash
+    if (undo.captured_piece != EMPTY)
+        hash_piece(zobrist_hash, undo.captured_piece, undo.captured_sq);
+
+    // restored moving piece at source in hash
+    hash_piece(zobrist_hash, moving_piece, m.from_sq);
+
+    // restore board
     squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)] = moving_piece;
-
-    // restore to_sq can be empty or captured piece
     squares[sq_to_row(undo.captured_sq)][sq_to_col(undo.captured_sq)] = undo.captured_piece;
 }
