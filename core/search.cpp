@@ -184,3 +184,123 @@ SearchResult search_alphabeta(Board &board, int depth)
 
     return SearchResult(best_move, best_score, nodes_searched);
 }
+// Alpha beta + Transposition Table
+
+static int alphabeta_tt(Board &board, int depth, int alpha, int beta)
+{
+    nodes_searched++;
+
+    // check TT before searching
+    TTEntry *entry = TT.probe(board.zobrist_hash);
+
+    // reuse cached result if depth is sufficient
+    if (entry && entry->depth >= depth)
+    {
+        if (entry->flag == TT_EXACT)
+            return entry->score;
+        if (entry->flag == TT_ALPHA && entry->score <= alpha)
+            return alpha;
+        if (entry->flag == TT_BETA && entry->score >= beta)
+            return beta;
+    }
+    // leaf node
+    if (depth == 0)
+    {
+        int score = evaluate(board);
+        TT.store(board.zobrist_hash, 0, score, TT_EXACT, Move(0, 0, 0));
+        return score;
+    }
+
+    MoveList moves = generate_moves(board, board.side_to_move);
+    if (moves.empty())
+        return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+
+    int original_alpha = alpha;
+    Move best_move = moves[0];
+
+    if (board.side_to_move == WHITE)
+    {
+        int best = -INF_SCORE;
+        for (const Move &m : moves)
+        {
+            UndoInfo undo = board.make_move(m);
+            int score = alphabeta_tt(board, depth - 1, alpha, beta);
+            board.unmake_move(m, undo);
+            if (score > best)
+            {
+                best = score;
+                best_move = m;
+            }
+            if (best > alpha)
+                alpha = best;
+            if (alpha >= beta)
+                break; // beta cutoff
+        }
+        // store result with correct flag
+        int flag = (best <= original_alpha) ? TT_ALPHA
+                   : (best >= beta)         ? TT_BETA
+                                            : TT_EXACT;
+        TT.store(board.zobrist_hash, depth, best, flag, best_move);
+        return best;
+    }
+    else
+    {
+        int best = INF_SCORE;
+        for (const Move &m : moves)
+        {
+            UndoInfo undo = board.make_move(m);
+            int score = alphabeta_tt(board, depth - 1, alpha, beta);
+            board.unmake_move(m, undo);
+            if (score < best)
+            {
+                best = score;
+                best_move = m;
+            }
+            if (best < beta)
+                beta = best;
+            if (alpha >= beta)
+                break; // alpha cutoff
+        }
+        int flag = (best >= beta)             ? TT_BETA
+                   : (best <= original_alpha) ? TT_ALPHA
+                                              : TT_EXACT;
+        TT.store(board.zobrist_hash, depth, best, flag, best_move);
+        return best;
+    }
+}
+
+SearchResult search_tt(Board &board, int depth)
+{
+    MoveList moves = generate_moves(board, board.side_to_move);
+    if (moves.empty())
+        return SearchResult();
+
+    TT.clear();
+    nodes_searched = 0;
+
+    Move best_move = moves[0];
+    int best_score = (board.side_to_move == WHITE) ? -INF_SCORE : INF_SCORE;
+    int alpha = -INF_SCORE, beta = INF_SCORE;
+
+    for (const Move &m : moves)
+    {
+        UndoInfo undo = board.make_move(m);
+        int score = alphabeta_tt(board, depth - 1, alpha, beta);
+        board.unmake_move(m, undo);
+        if (board.side_to_move == WHITE && score > best_score)
+        {
+            best_score = score;
+            best_move = m;
+            if (best_score > alpha)
+                alpha = best_score;
+        }
+        if (board.side_to_move == BLACK && score < best_score)
+        {
+            best_score = score;
+            best_move = m;
+            if (best_score < beta)
+                beta = best_score;
+        }
+    }
+    return SearchResult(best_move, best_score, nodes_searched);
+}

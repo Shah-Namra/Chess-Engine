@@ -9,6 +9,6 @@ chess-engine.zip
 tests.cpp
 tests.exe
 
-eval.cpp
-eval.exe
-eval.h
+core/eval.cpp
+core/eval.exe
+core/eval.h
