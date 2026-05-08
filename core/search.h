@@ -25,3 +25,5 @@ SearchResult search_minimax(Board &board, int depth);
 SearchResult search_alphabeta(Board &board, int depth);
 
 SearchResult search_tt(Board &board, int depth);
+
+SearchResult search_ordered(Board &board, int depth);
