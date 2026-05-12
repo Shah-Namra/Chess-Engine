@@ -133,3 +133,63 @@ void Board::unmake_move(const Move &m, const UndoInfo &undo)
     squares[sq_to_row(m.from_sq)][sq_to_col(m.from_sq)] = moving_piece;
     squares[sq_to_row(undo.captured_sq)][sq_to_col(undo.captured_sq)] = undo.captured_piece;
 }
+bool Board::load_fen(const std::string &fen)
+{
+    // clear board first
+    for (int r = 0; r < 8; r++)
+    {
+        for (int c = 0; c < 8; c++)
+        {
+            squares[r][c] = '.';
+        }
+    }
+
+    int pos = 0;
+    int row = 0;
+    int col = 0;
+
+    // parse board layout
+    while (pos < (int)fen.size() &&
+           fen[pos] != ' ')
+    {
+        char ch = fen[pos++];
+
+        // next rank
+        if (ch == '/')
+        {
+            row++;
+            col = 0;
+        }
+
+        // empty squares
+        else if (ch >= '1' && ch <= '8')
+        {
+            col += ch - '0';
+        }
+
+        // piece
+        else
+        {
+            if (row > 7 || col > 7)
+                return false;
+            squares[row][col] = ch;
+            col++;
+        }
+    }
+
+    if (pos >= (int)fen.size())
+        return false;
+
+    pos++; // skip space
+
+    // parse side to move
+    if (pos >= (int)fen.size())
+        return false;
+
+    side_to_move = (fen[pos] == 'w') ? WHITE : BLACK;
+
+    // rebuild hash from scratch
+    zobrist_hash = compute_hash(*this);
+
+    return true;
+}

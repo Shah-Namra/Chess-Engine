@@ -1,0 +1,17 @@
+# Tactical benchmark — positions from starting after 1-2 moves
+# Testing whether engine finds clearly winning responses
+
+# After 1.e4 e5 2.Nf3 — find the right continuation  
+rnbqkbnr/pppp1ppp/8/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm f1b5;
+
+# Fool's mate position — black to deliver mate
+rnb1kbnr/pppp1ppp/8/4p3/6Pq/5P2/PPPPP2P/RNBQKBNR b KQkq - bm h4f2;
+
+# Free queen — black queen hanging
+rnbqkb1r/pppp1ppp/5n2/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - bm f3e5;
+
+# Winning a pawn with check
+rnbqkbnr/ppp2ppp/8/3pp3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - bm d1h5;
+
+# Simple back rank rook trade winning
+8/8/8/8/8/8/8/R5k1 b - - bm g1f2;
