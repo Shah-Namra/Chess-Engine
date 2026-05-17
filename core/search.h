@@ -27,3 +27,6 @@ SearchResult search_alphabeta(Board &board, int depth);
 SearchResult search_tt(Board &board, int depth);
 
 SearchResult search_ordered(Board &board, int depth);
+
+// alpha beta + TT + move ordering + quiescence search 
+SearchResult search_quiescence(Board& board, int depth);
