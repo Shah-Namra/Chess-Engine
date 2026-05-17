@@ -337,4 +337,54 @@ MoveList generate_moves(const Board &board, Color side)
     generate_rook_moves(board, side, moves);
     generate_queen_moves(board, side, moves);
     return moves;
+}// legal move generation
+
+bool in_check(const Board &board, Color side)
+{
+    // find the king square
+    char king = (side == WHITE) ? 'K' : 'k';
+
+    // opponent side
+    Color opp = (side == WHITE) ? BLACK : WHITE;
+
+    for (int sq = 0; sq < 64; sq++)
+    {
+        // found king
+        if (piece_at(board, sq) == king)
+        {
+            // check if enemy attacks this square
+            return is_square_attacked(board, sq, opp);
+        }
+    }
+
+    // should never happen on a valid board
+    return false;
+}
+
+MoveList generate_legal_moves(Board &board, Color side)
+{
+    // generate pseudo-legal moves first
+    // then filter out moves that leave king in check
+    MoveList pseudo =
+        generate_moves(board, side);
+
+    MoveList legal;
+
+    legal.reserve(pseudo.size());
+
+    for (const Move &m : pseudo)
+    {
+        // make temporary move
+        UndoInfo undo =
+            board.make_move(m);
+
+        // move is legal if king is safe
+        if (!in_check(board, side))
+            legal.push_back(m);
+
+        // restore board
+        board.unmake_move(m, undo);
+    }
+
+    return legal;
 }

@@ -1,4 +1,3 @@
-
 #include "search.h"
 #include "movegen.h"
 #include "eval.h"
@@ -17,13 +16,17 @@ static int minimax_impl(Board &board, int depth)
     if (depth == 0)
         return evaluate(board);
 
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
 
     // no moves = checkmate or stalemate
     //
     if (moves.empty())
-        // bad for whoever is stuck,negate based on who's to move
-        return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+    {
+        // checkmate or stalemate — in_check() tells us which
+        if (in_check(board, board.side_to_move))
+            return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+        return 0; // stalemate
+    }
 
     if (board.side_to_move == WHITE)
     {
@@ -55,7 +58,7 @@ static int minimax_impl(Board &board, int depth)
 
 SearchResult search_minimax(Board &board, int depth)
 {
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
         return SearchResult();
 
@@ -101,10 +104,15 @@ static int alphabeta(Board &board, int depth, int alpha, int beta)
     if (depth == 0)
         return evaluate(board);
 
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
 
     if (moves.empty())
-        return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+    {
+        // checkmate or stalemate: in_check() tells us which
+        if (in_check(board, board.side_to_move))
+            return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+        return 0; // stalemate
+    }
 
     if (board.side_to_move == WHITE)
     {
@@ -150,7 +158,7 @@ static int alphabeta(Board &board, int depth, int alpha, int beta)
 
 SearchResult search_alphabeta(Board &board, int depth)
 {
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
         return SearchResult();
 
@@ -214,9 +222,13 @@ static int alphabeta_tt(Board &board, int depth, int alpha, int beta)
         return score;
     }
 
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
-        return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+    {
+        if (in_check(board, board.side_to_move))
+            return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+        return 0; // stalemate
+    }
 
     int original_alpha = alpha;
     Move best_move = moves[0];
@@ -274,7 +286,7 @@ static int alphabeta_tt(Board &board, int depth, int alpha, int beta)
 
 SearchResult search_tt(Board &board, int depth)
 {
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
         return SearchResult();
 
@@ -335,9 +347,13 @@ static int alphabeta_ordered(Board &board, int depth, int alpha, int beta)
         return score;
     }
 
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
-        return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+    {
+        if (in_check(board, board.side_to_move))
+            return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
+        return 0; // stalemate
+    }
 
     order_moves(moves, board, tt_move);
 
@@ -396,7 +412,7 @@ static int alphabeta_ordered(Board &board, int depth, int alpha, int beta)
 
 SearchResult search_ordered(Board &board, int depth)
 {
-    MoveList moves = generate_moves(board, board.side_to_move);
+    MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
         return SearchResult();
 
