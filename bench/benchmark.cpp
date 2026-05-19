@@ -145,19 +145,14 @@ void run_benchmark(const std::string &epd_path, int depth)
                       << fen << "\n";
             continue;
         }
+        const double TIME_LIMIT_MS = 2000.0;
 
         // run search + measure time
         auto t0 = std::chrono::steady_clock::now();
-
-        SearchResult result =
-            search_ordered(board, depth);
-
+        auto t0 = std::chrono::steady_clock::now();
+        SearchResult result = search_ordered(board, depth); 
         auto t1 = std::chrono::steady_clock::now();
-
-        double ms =
-            std::chrono::duration<double,
-                                  std::milli>(t1 - t0)
-                .count();
+        double ms = std::chrono::duration<double, std::milli>(t1 - t0).count();
 
         total_ms += ms;
         total_nodes += result.nodes;
@@ -197,15 +192,10 @@ void run_benchmark(const std::string &epd_path, int depth)
 
     // final stats
     std::cout << "\n";
-
     std::cout << "Puzzles: " << total << "\n";
-
     std::cout << "Correct: " << correct << "\n";
-
     std::cout << "Accuracy: " << (total > 0 ? (correct * 100 / total) : 0) << "%\n";
-
     std::cout << "Total nodes: " << total_nodes << "\n";
-
     std::cout << "Total time: " << (int)total_ms << "ms\n";
 
     if (total > 0)

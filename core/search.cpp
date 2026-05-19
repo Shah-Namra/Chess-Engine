@@ -774,3 +774,15 @@ SearchResult search_quiescence(Board& board, int depth)
 
     return SearchResult(best_move, best_score, nodes_searched);
 }
+
+SearchResult search_iterative(Board& board, int max_depth) {
+    // search depth 1, 2, 3... up to max_depth
+    // each pass fills the TT which orders the next pass better
+    // this makes deeper searches much faster than going straight to max_depth
+    SearchResult best;
+    for (int depth = 1; depth <= max_depth; depth++) {
+        TT.clear();
+        best = search_quiescence(board, depth);
+    }
+    return best;
+}

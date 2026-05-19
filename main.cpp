@@ -57,8 +57,8 @@ int main(int argc, char *argv[])
     node_benchmark();
 
     // accuracy puzzle
-    std::cout << "\nTactical Puzzle Benchmark (depth 5)\n";
-    run_benchmark("bench/puzzles.epd", 5);
+    std::cout << "\nTactical Puzzle Benchmark (depth 6)\n";
+    run_benchmark("bench/puzzles.epd", 6);
 
     return 0;
 }
