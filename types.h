@@ -31,7 +31,9 @@ struct Move
     // move type flags (0=quiet, others=special).
     int flags;
 
-    // default = quiet move.
+    // default constructor: needed for array initialization (killer table etc).
+    Move() : from_sq(0), to_sq(0), flags(0) {}
+
     Move(int from, int to, int f = 0) : from_sq(from), to_sq(to), flags(f) {}
 };
 

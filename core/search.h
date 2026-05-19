@@ -19,15 +19,17 @@ struct SearchResult
 };
 
 // minimax
-SearchResult search_minimax(Board &board, int depth);
+SearchResult search_minimax(Board& board, int depth);
 
 // alpha-beta
-SearchResult search_alphabeta(Board &board, int depth);
+SearchResult search_alphabeta(Board& board, int depth);
 
-SearchResult search_tt(Board &board, int depth);
+// alpha beta + transposition table
+SearchResult search_tt(Board& board, int depth);
 
-SearchResult search_ordered(Board &board, int depth);
+// alpha beta + TT + move ordering
+SearchResult search_ordered(Board& board, int depth);
 
-// alpha beta + TT + move ordering + quiescence search 
+// alpha beta + TT + move ordering + quiescence search
 SearchResult search_quiescence(Board& board, int depth);
 SearchResult search_iterative(Board& board, int max_depth);
