@@ -8,6 +8,8 @@
 #include "bench/benchmark.h"
 #include "types.h"
 #include "constants.h"
+#include "bench/perft.h"
+#include "core/movegen.h"
 
 static std::string sq_to_alg(int sq)
 {
@@ -51,12 +53,14 @@ int main(int argc, char *argv[])
 {
     init_attack_tables();
     init_zobrist();
-
+   
     std::cout << "Chess Engine Benchmark\n";
+
+    // verifying move generation
+    run_perft_suite();
 
     node_benchmark();
 
-    // accuracy puzzle
     std::cout << "\nTactical Puzzle Benchmark (depth 6)\n";
     run_benchmark("bench/puzzles.epd", 6);
 

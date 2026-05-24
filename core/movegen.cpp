@@ -9,10 +9,9 @@
 
 // Square index helpers, convert 0....63 into [row, col] format and back
 
-static inline int sq_to_row(int sq) { return 7 - (sq / 8); }
-static inline int sq_to_col(int sq) { return sq % 8; }
 static inline int rc_to_sq(int row, int col) { return (7 - row) * 8 + col; }
-
+static inline int sq_to_row(int sq) { return 7 - (sq / 8); } // back to topdown row
+static inline int sq_to_col(int sq) { return sq % 8; }
 static inline bool is_empty(const Board &board, int sq)
 {
     return board.get_piece(sq_to_row(sq), sq_to_col(sq)) == EMPTY;
@@ -222,9 +221,6 @@ bool is_square_attacked(const Board &board, int sq, Color attacker)
             return true;
     }
 
-    // whether a square is attacked by a B/R/Q or not
-    // the trick: to check if sq is attacked by R... cast a R ray FROM sq and check if it hits one of the opponents rooks or queens
-
     // rook/queen rays ... straight lines
     char atk_rook = (attacker == WHITE) ? 'R' : 'r';
     char atk_queen = (attacker == WHITE) ? 'Q' : 'q';
@@ -273,6 +269,28 @@ bool is_square_attacked(const Board &board, int sq, Color attacker)
             if (p == atk_bishop || p == atk_queen)
                 return true;
             break;
+        }
+    }
+
+    // pawn attacks
+    // check if an enemy pawn attacks this square
+    char atk_pawn = (attacker == WHITE) ? 'P' : 'p';
+    int r = sq_to_row(sq);
+    int c = sq_to_col(sq);
+    int pr = (attacker == WHITE) ? r + 1 : r - 1;
+    // white pawns attack upward
+    // black pawns attack downward
+
+    if (pr >= 0 && pr <= 7)
+    {
+        // check both pawn attack diagonals
+        for (int dc = -1; dc <= 1; dc += 2)
+        {
+            int pc = c + dc;
+            if (pc < 0 || pc > 7)
+                continue;
+            if (board.get_piece(pr, pc) == atk_pawn)
+                return true;
         }
     }
 
@@ -337,52 +355,53 @@ MoveList generate_moves(const Board &board, Color side)
     generate_rook_moves(board, side, moves);
     generate_queen_moves(board, side, moves);
     return moves;
-}// legal move generation 
+} // legal move generation
 
-bool in_check(const Board& board, Color side) {
+bool in_check(const Board &board, Color side)
+{
     // find the king square
     char king = (side == WHITE) ? 'K' : 'k';
-    
+
     // oponent side
     Color opp = (side == WHITE) ? BLACK : WHITE;
 
-    for (int sq = 0; sq < 64; sq++) 
+    for (int sq = 0; sq < 64; sq++)
     {
         // found king
         if (piece_at(board, sq) == king)
         {
-            // check if enemy attacks this square   
-        return is_square_attacked(board, sq, opp);
+            // check if enemy attacks this square
+            return is_square_attacked(board, sq, opp);
         }
     }
-    
+
     // should never happen on a valid board
-    return false; 
+    return false;
 }
 
-MoveList generate_legal_moves(Board& board, Color side) 
-{    
+MoveList generate_legal_moves(Board &board, Color side)
+{
     // generate pseudo-legal moves first
     // then filter out moves that leave king in check
-    MoveList pseudo = 
-    generate_moves(board, side);
+    MoveList pseudo =
+        generate_moves(board, side);
 
     MoveList legal;
 
     legal.reserve(pseudo.size());
 
-    for (const Move& m : pseudo) 
+    for (const Move &m : pseudo)
     {
-    // make temporary move
-        UndoInfo undo = 
-        board.make_move(m);
+        // make temporary move
+        UndoInfo undo =
+            board.make_move(m);
 
         // move is legal if king is safe
         if (!in_check(board, side))
             legal.push_back(m);
 
         // restore board
-            board.unmake_move(m, undo);
+        board.unmake_move(m, undo);
     }
 
     return legal;
