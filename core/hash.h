@@ -12,7 +12,10 @@ extern uint64_t ZOBRIST_PIECES[2][6][64];
 // extra key to encode whose turn it is
 extern uint64_t ZOBRIST_SIDE;
 
-// initialize random keys (call once at program start)
+// comment lakhvani baaki che 
+// extra keys for en passant file 
+extern uint64_t ZOBRIST_EP_FILE[8];
+
 void init_zobrist();
 
 // convert piece char .. color, type

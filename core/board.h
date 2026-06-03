@@ -14,7 +14,12 @@ struct Board
     char squares[8][8];
     Color side_to_move;
 
-    // zpbrist hash  which updates incrementally with every move
+    // The square a pawn just double-pushed OVER (the skipped square)... for en passant 
+    // -1 = no en passant possible..teset every move
+    // Stored as a standard a1=0 .. h8=63 square index
+    int ep_square;
+
+    // Zobrist hash, updated incrementally with every move
     uint64_t zobrist_hash;
 
     Board();
@@ -24,8 +29,8 @@ struct Board
 
     void print() const;
 
-    UndoInfo make_move(const Move &m);                     // mpve applied and hash updated
-    void unmake_move(const Move &m, const UndoInfo &undo); // move unod and restore hash
+    UndoInfo make_move(const Move &m);
+    void unmake_move(const Move &m, const UndoInfo &undo);
 
     bool load_fen(const std::string &fen);
 };

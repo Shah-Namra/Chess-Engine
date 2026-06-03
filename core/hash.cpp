@@ -9,10 +9,11 @@
 // zoborist tables
 uint64_t ZOBRIST_PIECES[2][6][64];
 uint64_t ZOBRIST_SIDE;
+uint64_t ZOBRIST_EP_FILE[8];
 
 // Maps PieceType enum values to array indices.
 // p=0, k=1, b=2, r=3, q=4, k=5
-static const int PIECE_INDEX[] = {0, 1, 2, 3, 4, 5};
+// static const int PIECE_INDEX[] = {0, 1, 2, 3, 4, 5};
 
 void init_zobrist()
 {
@@ -25,6 +26,9 @@ void init_zobrist()
                 ZOBRIST_PIECES[color][type][sq] = rng();
 
     ZOBRIST_SIDE = rng();
+
+    for (int f = 0; f < 8; f++)
+        ZOBRIST_EP_FILE[f] = rng();
 }
 
 bool piece_to_index(char p, int &color, int &type)
@@ -80,6 +84,10 @@ uint64_t compute_hash(const Board &board)
     // include side to move
     if (board.side_to_move == BLACK)
         h ^= ZOBRIST_SIDE;
+
+    // include ep file in the hash if there is one
+    if (board.ep_square >= 0)
+        h ^= ZOBRIST_EP_FILE[board.ep_square % 8];
 
     return h;
 }

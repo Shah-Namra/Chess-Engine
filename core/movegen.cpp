@@ -1,6 +1,6 @@
 // movegen.cpp
-// Move generation — one piece type per phase.
-// pseudo-legal moves only until Phase 9 adds legality filtering.
+// Move generation one piece type per phase
+// pseudo legal moves only until Phase 9 adds legality filtering
 
 #include "movegen.h"
 #include "constants.h"
@@ -88,21 +88,25 @@ void generate_pawn_moves(const Board &board, Color side, MoveList &moves)
                 if (cap_sq < 0 || cap_sq > 63)
                     continue;
                 char target = piece_at(board, cap_sq);
-                if (!is_enemy(target, side))
-                    continue;
-                int to_row = sq_to_row(cap_sq);
-                if (to_row == promo_row)
-                    moves.push_back(Move(from_sq, cap_sq, FLAG_PROMO_QUEEN));
-                else
-                    moves.push_back(Move(from_sq, cap_sq, FLAG_CAPTURE));
-            }
 
-            // TODO: en passant — needs ep square stored in Board state
+                // normal capture
+                if (is_enemy(target, side))
+                {
+                    int to_row = sq_to_row(cap_sq);
+                    if (to_row == promo_row)
+                        moves.push_back(Move(from_sq, cap_sq, FLAG_PROMO_QUEEN));
+                    else
+                        moves.push_back(Move(from_sq, cap_sq, FLAG_CAPTURE));
+                }
+                // if en passant is target square is empty, but board.ep_square matches
+                else if (target == EMPTY && cap_sq == board.ep_square)
+                {
+                    moves.push_back(Move(from_sq, cap_sq, FLAG_EN_PASSANT));
+                }
+            }
         }
     }
-}
-
-// === Ray casting helper
+} // === Ray casting helper
 // move in a direction until we hit a peice or edge of the baord
 // toDo: need toimprove it
 

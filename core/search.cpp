@@ -17,7 +17,7 @@ static int minimax_impl(Board &board, int depth)
         return evaluate(board);
 
     MoveList moves = generate_legal_moves(board, board.side_to_move);
-    
+
     // no moves = checkmate or stalemate
     //
     if (moves.empty()) {
@@ -104,7 +104,7 @@ static int alphabeta(Board &board, int depth, int alpha, int beta)
         return evaluate(board);
 
     MoveList moves = generate_legal_moves(board, board.side_to_move);
-    
+
     if (moves.empty())
     {
         // checkmate or stalemate: in_check() tells us which
@@ -127,7 +127,7 @@ static int alphabeta(Board &board, int depth, int alpha, int beta)
             if (best > alpha)
                 alpha = best;
 
-                // beta should stop here if the white has a better move then black
+            // beta should stop here if the white has a better move then black
             if (alpha >= beta)
                 break;
         }
@@ -223,7 +223,7 @@ static int alphabeta_tt(Board &board, int depth, int alpha, int beta)
 
     MoveList moves = generate_legal_moves(board, board.side_to_move);
     if (moves.empty())
-     {
+    {
         if (in_check(board, board.side_to_move))
             return (board.side_to_move == WHITE) ? -INF_SCORE + 1 : INF_SCORE - 1;
         return 0; // stalemate
@@ -475,7 +475,7 @@ static int quiesce(Board &board, int alpha, int beta)
         if (stand_pat >= beta)
             return beta;
 
-            if (stand_pat > alpha)
+        if (stand_pat > alpha)
             alpha = stand_pat;
     }
     else
@@ -483,7 +483,7 @@ static int quiesce(Board &board, int alpha, int beta)
         if (stand_pat <= alpha)
             return alpha;
 
-            if (stand_pat < beta)
+        if (stand_pat < beta)
             beta = stand_pat;
     }
     // generate legal moves
@@ -493,7 +493,7 @@ static int quiesce(Board &board, int alpha, int beta)
     MoveList captures;
     for (const Move &m : all_moves)
     {
-        if (m.flags == FLAG_CAPTURE || m.flags == FLAG_PROMO_QUEEN)
+        if (m.flags == FLAG_CAPTURE || m.flags == FLAG_PROMO_QUEEN || m.flags == FLAG_EN_PASSANT)
             captures.push_back(m);
     }
 
@@ -548,7 +548,7 @@ static int alphabeta_q(Board &board, int depth, int alpha, int beta, int ply)
 {
     nodes_searched++;
 
-        // transposition table lookup
+    // transposition table lookup
     TTEntry *entry = TT.probe(board.zobrist_hash);
     Move tt_move(0, 0, 0);
 
@@ -580,10 +580,10 @@ static int alphabeta_q(Board &board, int depth, int alpha, int beta, int ply)
     }
 
     // move ordering improves pruning
-     order_moves(moves, board, tt_move, ply);
+    order_moves(moves, board, tt_move, ply);
 
     int original_alpha = alpha;
-    
+
     Move best_move = moves[0];
     int color = (board.side_to_move == WHITE) ? 0 : 1;
 
@@ -609,7 +609,8 @@ static int alphabeta_q(Board &board, int depth, int alpha, int beta, int ply)
             {
                 // killer + history update only for quiet moves
                 bool is_quiet = (m.flags != FLAG_CAPTURE &&
-                                 m.flags != FLAG_PROMO_QUEEN);
+                                 m.flags != FLAG_PROMO_QUEEN &&
+                                 m.flags != FLAG_EN_PASSANT);
                 if (is_quiet)
                 {
                     update_killers(m, ply);
@@ -644,7 +645,8 @@ static int alphabeta_q(Board &board, int depth, int alpha, int beta, int ply)
             if (alpha >= beta)
             {
                 bool is_quiet = (m.flags != FLAG_CAPTURE &&
-                                 m.flags != FLAG_PROMO_QUEEN);
+                                 m.flags != FLAG_PROMO_QUEEN &&
+                                 m.flags != FLAG_EN_PASSANT);
                 if (is_quiet)
                 {
                     update_killers(m, ply);
@@ -695,12 +697,12 @@ SearchResult search_quiescence(Board &board, int depth)
             if (best_score > alpha)
                 alpha = best_score;
         }
-     
+
         if (board.side_to_move == BLACK && score < best_score)
         {
             best_score = score;
             best_move = m;
-            
+
             if (best_score < beta)
                 beta = best_score;
         }
@@ -710,9 +712,9 @@ SearchResult search_quiescence(Board &board, int depth)
 }
 
 // iterative deepening
-    // search depth 1, 2, 3... up to max_depth
-    // each pass fills the TT which orders the next pass better
-    // this makes deeper searches much faster than going straight to max_depth.
+// search depth 1, 2, 3... up to max_depth
+// each pass fills the TT which orders the next pass better
+// this makes deeper searches much faster than going straight to max_depth.
 SearchResult search_iterative(Board &board, int max_depth)
 {
     TT.clear();

@@ -20,14 +20,14 @@ void clear_search_tables()
 }
 
 // two moves are "the same move" if from/to/flags match
-static inline bool same_move(const Move& a, const Move& b)
+static inline bool same_move(const Move &a, const Move &b)
 {
     return a.from_sq == b.from_sq &&
            a.to_sq   == b.to_sq   &&
            a.flags   == b.flags;
 }
 
-void update_killers(const Move& m, int ply)
+void update_killers(const Move &m, int ply)
 {
     if (ply < 0 || ply >= MAX_PLY)
         return;
@@ -41,12 +41,12 @@ void update_killers(const Move& m, int ply)
     killers[ply][0] = m;
 }
 
-void update_history(const Move& m, int color, int depth)
+void update_history(const Move &m, int color, int depth)
 {
     // bonus is depth*depth: deeper cutoffs are worth more
     // cap to avoid overflow on long searches
     int bonus = depth * depth;
-    int& h = history[color][m.from_sq][m.to_sq];
+    int &h = history[color][m.from_sq][m.to_sq];
     h += bonus;
     if (h > 1000000)
         h = 1000000;
@@ -74,7 +74,7 @@ int mvv_lva_score(char attacker, char victim)
     return char_value(victim) * 10 - char_value(attacker);
 }
 
-void order_moves(MoveList& moves, const Board& board, Move tt_move, int ply)
+void order_moves(MoveList &moves, const Board &board, Move tt_move, int ply)
 {
     struct ScoredMove
     {
@@ -91,7 +91,7 @@ void order_moves(MoveList& moves, const Board& board, Move tt_move, int ply)
     // a tt_move with from==to is treated as "no tt move"
     bool tt_valid = (tt_move.from_sq != tt_move.to_sq);
 
-    for (const Move& m : moves)
+    for (const Move &m : moves)
     {
         int score = 0;
 
@@ -101,7 +101,7 @@ void order_moves(MoveList& moves, const Board& board, Move tt_move, int ply)
             score = 1000000;
         }
         // 2. captures + queen promotions — MVV-LVA
-        else if (m.flags == FLAG_CAPTURE || m.flags == FLAG_PROMO_QUEEN)
+        else if (m.flags == FLAG_CAPTURE || m.flags == FLAG_PROMO_QUEEN || m.flags == FLAG_EN_PASSANT)
         {
             char attacker = board.get_piece(sq_to_row(m.from_sq), sq_to_col(m.from_sq));
             char victim   = board.get_piece(sq_to_row(m.to_sq),   sq_to_col(m.to_sq));
@@ -128,14 +128,14 @@ void order_moves(MoveList& moves, const Board& board, Move tt_move, int ply)
     std::stable_sort(
         scored.begin(),
         scored.end(),
-        [](const ScoredMove& a, const ScoredMove& b)
+        [](const ScoredMove &a, const ScoredMove &b)
         {
             return a.score > b.score;
         });
 
     // Copy sorted moves back
     for (int i = 0; i < (int)moves.size(); i++)
-    {        
+    {
         moves[i] = scored[i].move;
     }
 }
