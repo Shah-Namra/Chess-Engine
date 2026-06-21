@@ -1,27 +1,13 @@
 #pragma once
 
-// hash.h
-// zobrist hashing interface (fast board fingerprinting)
-
 #include <cstdint>
 #include "types.h"
 
-// random keys for each (color, piece type, square)
 extern uint64_t ZOBRIST_PIECES[2][6][64];
-
-// extra key to encode whose turn it is
 extern uint64_t ZOBRIST_SIDE;
-
-// comment lakhvani baaki che 
-// extra keys for en passant file 
 extern uint64_t ZOBRIST_EP_FILE[8];
+extern uint64_t ZOBRIST_CASTLING[4]; // one key per right (WK, WQ, BK, BQ)
 
 void init_zobrist();
-
-// convert piece char .. color, type
-// returns false if square is empty
 bool piece_to_index(char p, int &color, int &type);
-
-// compute hash from scratch by scanning board
-// mainly used to verify incremental updates
 uint64_t compute_hash(const class Board &board);

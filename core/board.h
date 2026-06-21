@@ -1,6 +1,5 @@
 #pragma once
 
-// board.h
 #include <iostream>
 #include <string>
 #include <cstdint>
@@ -10,16 +9,10 @@ const char EMPTY = '.';
 
 struct Board
 {
-    // squares[0] = rank 8, squares[7] = rank 1.
-    char squares[8][8];
+    char squares[8][8]; // squares[0] = rank 8, squares[7] = rank 1
     Color side_to_move;
-
-    // The square a pawn just double-pushed OVER (the skipped square)... for en passant 
-    // -1 = no en passant possible..teset every move
-    // Stored as a standard a1=0 .. h8=63 square index
-    int ep_square;
-
-    // Zobrist hash, updated incrementally with every move
+    int ep_square;       // a1=0..h8=63, -1 = none
+    int castling_rights; // bitmask: CASTLE_WK | CASTLE_WQ | CASTLE_BK | CASTLE_BQ
     uint64_t zobrist_hash;
 
     Board();

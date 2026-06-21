@@ -36,6 +36,15 @@ static inline bool is_own(char piece, Color side)
     return (side == WHITE) ? std::isupper(piece) : std::islower(piece);
 }
 
+// emit all four promotion moves (Q, R, B, N) for a pawn reaching the back rank
+static inline void add_promotions(int from_sq, int to_sq, MoveList &moves)
+{
+    moves.push_back(Move(from_sq, to_sq, FLAG_PROMO_QUEEN));
+    moves.push_back(Move(from_sq, to_sq, FLAG_PROMO_ROOK));
+    moves.push_back(Move(from_sq, to_sq, FLAG_PROMO_BISHOP));
+    moves.push_back(Move(from_sq, to_sq, FLAG_PROMO_KNIGHT));
+}
+
 // pawn moves
 // includes: push, double push, captures, promotions
 // TODO: en passant
@@ -64,7 +73,7 @@ void generate_pawn_moves(const Board &board, Color side, MoveList &moves)
             {
                 int to_row = sq_to_row(to_sq);
                 if (to_row == promo_row)
-                    moves.push_back(Move(from_sq, to_sq, FLAG_PROMO_QUEEN));
+                    add_promotions(from_sq, to_sq, moves);
                 else
                     moves.push_back(Move(from_sq, to_sq, FLAG_QUIET));
 
@@ -94,7 +103,7 @@ void generate_pawn_moves(const Board &board, Color side, MoveList &moves)
                 {
                     int to_row = sq_to_row(cap_sq);
                     if (to_row == promo_row)
-                        moves.push_back(Move(from_sq, cap_sq, FLAG_PROMO_QUEEN));
+                        add_promotions(from_sq, cap_sq, moves);
                     else
                         moves.push_back(Move(from_sq, cap_sq, FLAG_CAPTURE));
                 }
@@ -328,10 +337,13 @@ void generate_king_moves(const Board &board, Color side, MoveList &moves)
 {
     char king = (side == WHITE) ? 'K' : 'k';
     Color opp = (side == WHITE) ? BLACK : WHITE;
+
     for (int sq = 0; sq < 64; sq++)
     {
         if (piece_at(board, sq) != king)
             continue;
+
+        // normal 1-square king moves
         Bitboard atk = KING_ATTACKS[sq];
         while (atk)
         {
@@ -344,8 +356,58 @@ void generate_king_moves(const Board &board, Color side, MoveList &moves)
             int flag = is_enemy(target, side) ? FLAG_CAPTURE : FLAG_QUIET;
             moves.push_back(Move(sq, to_sq, flag));
         }
+
+        //  CASTLING
+        // moves: check castling rights, empty squares, and attacked squares
+        if (is_square_attacked(board, sq, opp))
+            continue;
+
+        // White on e1 (sq=4), black on e8 (sq=60)
+        if (side == WHITE && sq == 4)
+        {
+            // kingside: e1->g1 via f1; squares f1,g1 must be empty;
+            // f1 and g1 must not be attacked
+            if ((board.castling_rights & CASTLE_WK) &&
+                piece_at(board, 5) == EMPTY && piece_at(board, 6) == EMPTY &&
+                !is_square_attacked(board, 5, opp) &&
+                !is_square_attacked(board, 6, opp))
+            {
+                moves.push_back(Move(4, 6, FLAG_CASTLE_KINGSIDE));
+            }
+            // queenside: e1->c1 via d1; b1,c1,d1 must be empty;
+            // c1 and d1 must not be attacked (b1 attacked is OK)
+            if ((board.castling_rights & CASTLE_WQ) &&
+                piece_at(board, 1) == EMPTY &&
+                piece_at(board, 2) == EMPTY &&
+                piece_at(board, 3) == EMPTY &&
+                !is_square_attacked(board, 2, opp) &&
+                !is_square_attacked(board, 3, opp))
+            {
+                moves.push_back(Move(4, 2, FLAG_CASTLE_QUEENSIDE));
+            }
+        }
+        else if (side == BLACK && sq == 60)
+        {
+            // kingside: e8->g8 via f8 (sq 60,61,62)
+            if ((board.castling_rights & CASTLE_BK) &&
+                piece_at(board, 61) == EMPTY && piece_at(board, 62) == EMPTY &&
+                !is_square_attacked(board, 61, opp) &&
+                !is_square_attacked(board, 62, opp))
+            {
+                moves.push_back(Move(60, 62, FLAG_CASTLE_KINGSIDE));
+            }
+            // queenside: e8->c8 via d8 (sq 57,58,59 empty; 58,59 safe)
+            if ((board.castling_rights & CASTLE_BQ) &&
+                piece_at(board, 57) == EMPTY &&
+                piece_at(board, 58) == EMPTY &&
+                piece_at(board, 59) == EMPTY &&
+                !is_square_attacked(board, 58, opp) &&
+                !is_square_attacked(board, 59, opp))
+            {
+                moves.push_back(Move(60, 58, FLAG_CASTLE_QUEENSIDE));
+            }
+        }
     }
-    // TODO: castling (needs rights + attack checks + board state)
 }
 
 // full move list

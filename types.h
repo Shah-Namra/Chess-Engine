@@ -46,7 +46,8 @@ using MoveList = std::vector<Move>;
 // todo:
 struct UndoInfo
 {
-    char captured_piece; // "." no peice is captured
+       char captured_piece; // "." no peice is captured
     int captured_sq;     // sqare where peice is captured
     int  prev_ep_square;     // ep_square before this move was made
+    int  prev_castling_rights;    // castling_rgihts bitmasked before this move
 };

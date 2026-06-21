@@ -1,23 +1,16 @@
-// hash.cpp
-// Zobrist hash table init and position hashing.
-
 #include "hash.h"
 #include "board.h"
+#include "constants.h"
 #include <random>
 #include <cctype>
 
-// zoborist tables
 uint64_t ZOBRIST_PIECES[2][6][64];
 uint64_t ZOBRIST_SIDE;
 uint64_t ZOBRIST_EP_FILE[8];
-
-// Maps PieceType enum values to array indices.
-// p=0, k=1, b=2, r=3, q=4, k=5
-// static const int PIECE_INDEX[] = {0, 1, 2, 3, 4, 5};
+uint64_t ZOBRIST_CASTLING[4];
 
 void init_zobrist()
 {
-    // same random value every time seeding
     std::mt19937_64 rng(0xDEADBEEFCAFEBABEULL);
 
     for (int color = 0; color < 2; color++)
@@ -29,15 +22,16 @@ void init_zobrist()
 
     for (int f = 0; f < 8; f++)
         ZOBRIST_EP_FILE[f] = rng();
+
+    for (int c = 0; c < 4; c++)
+        ZOBRIST_CASTLING[c] = rng();
 }
 
 bool piece_to_index(char p, int &color, int &type)
 {
     if (p == '.')
         return false;
-
-    color = std::isupper(p) ? 0 : 1; // 0 = whtie, 1 = black
-
+    color = std::isupper(p) ? 0 : 1;
     switch (std::toupper(p))
     {
     case 'P':
@@ -73,21 +67,26 @@ uint64_t compute_hash(const Board &board)
         int row = 7 - (sq / 8);
         int col = sq % 8;
         char p = board.get_piece(row, col);
-
         int color, type;
         if (!piece_to_index(p, color, type))
             continue;
-        // XOR peice into hash
         h ^= ZOBRIST_PIECES[color][type][sq];
     }
 
-    // include side to move
     if (board.side_to_move == BLACK)
         h ^= ZOBRIST_SIDE;
 
-    // include ep file in the hash if there is one
     if (board.ep_square >= 0)
         h ^= ZOBRIST_EP_FILE[board.ep_square % 8];
+
+    if (board.castling_rights & CASTLE_WK)
+        h ^= ZOBRIST_CASTLING[0];
+    if (board.castling_rights & CASTLE_WQ)
+        h ^= ZOBRIST_CASTLING[1];
+    if (board.castling_rights & CASTLE_BK)
+        h ^= ZOBRIST_CASTLING[2];
+    if (board.castling_rights & CASTLE_BQ)
+        h ^= ZOBRIST_CASTLING[3];
 
     return h;
 }
