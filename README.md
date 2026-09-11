@@ -1,6 +1,8 @@
 ﻿# Chess-Engine
 
+
 A chess engine written from scratch in C++17, using 64-bit bitboard board representation, minimax search with alpha-beta pruning, and a Zobrist-hashed transposition table. Benchmarked against Stockfish on mate-in-3 tactical puzzles.
+
 ---
 
 ## Build
